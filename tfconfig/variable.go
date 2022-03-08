@@ -83,6 +83,25 @@ func ReturnFields(str string, isMap bool) map[string]string {
 			break
 		}
 
+		//array
+		arraySplit := strings.SplitAfter(strSplit[y], ":")
+		arrayLastSplit := strings.SplitAfter(arraySplit[0], "\"")
+		if len(arraySplit) == 2 && strings.Index(arraySplit[1], "\\[") == 0 {
+			_, err := regexp.Compile("^" + arraySplit[1] + "$")
+			if nil == err {
+				if len(levelUp) > 0 {
+					fName = strings.Join(levelUp, "__") + "__" + strings.Replace(arrayLastSplit[1], "\\\"", "", -1)
+				} else {
+					fName = strings.Replace(arrayLastSplit[1], "\\\"", "", -1)
+				}
+				if isMap {
+					fName = "mapValue"
+				}
+				validations[fName] = "^" + arraySplit[1] + "$"
+				continue
+			}
+		}
+
 		//string
 		lastSplit := strings.SplitAfter(strSplit[y], "\"")
 		for u := 0; u < len(lastSplit); u++ {
@@ -100,32 +119,32 @@ func ReturnFields(str string, isMap bool) map[string]string {
 					fName = "mapValue"
 				}
 				validations[fName] = "^" + strings.Replace(lastSplit[3], "\\\"", "", -1) + "$"
-				break
+				continue
 			}
 		}
 		if len(lastSplit) > 1 && validations[strings.Replace(lastSplit[1], "\\\"", "", -1)] != "" {
 			continue
 		}
-		//fmt.Println(y)
+
 		//number
 		numbSplit := strings.SplitAfter(strSplit[y], ":")
-		strSplit := strings.SplitAfter(numbSplit[0], "\"")
-		if len(numbSplit) < 2 || len(strSplit) < 2 {
+		numbLastSplit := strings.SplitAfter(numbSplit[0], "\"")
+		if len(numbSplit) < 2 || len(numbLastSplit) < 2 {
 			continue
 		}
 		_, err := regexp.Compile("^" + strings.Replace(numbSplit[1], "\"", "", -1) + "$")
 		if nil == err {
 			if len(levelUp) > 0 {
-				fName = strings.Join(levelUp, "__") + "__" + strings.Replace(lastSplit[1], "\\\"", "", -1)
+				fName = strings.Join(levelUp, "__") + "__" + strings.Replace(numbLastSplit[1], "\\\"", "", -1)
 			} else {
-				fName = strings.Replace(strSplit[1], "\\\"", "", -1)
+				fName = strings.Replace(numbLastSplit[1], "\\\"", "", -1)
 			}
 			if isMap {
 				fName = "mapValue"
 			}
 			validations[fName] = "^" + strings.Replace(numbSplit[1], "\\\"", "", -1) + "$"
-			continue
 		}
 	}
+
 	return validations
 }
